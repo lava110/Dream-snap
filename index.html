@@ -413,9 +413,43 @@
         weathers: { "clear": "clear sky", "rain": "heavy rain", "snow": "snowing", "fog": "foggy" }
     };
     
+    const missions = // --- 🏆 升级版题库：5个循序渐进的关卡 ---
     const missions = [
-        { id: 1, title: "悲伤的雨夜", desc: "生成一张在 <b>雨中(Rain)</b> 的 <b>悲伤(Crying)</b> 的 <b>赛博少女(Girl)</b>。", requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" } },
-        { id: 2, title: "快乐的猫", desc: "生成一张 <b>大笑(Laughing)</b> 的 <b>宇航员猫咪</b>。", requirements: { "subject-select": "cat", "emotion-slider": "2" } }
+        { 
+            id: 1, 
+            title: "新手村：雨中泪", 
+            desc: "让我们开始第一课。请生成一张充满故事感的照片：<br>在 <b>雨中(Rain)</b> 的 <b>悲伤(Crying)</b> 的 <b>赛博少女(Girl)</b>。", 
+            requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" },
+            hint: "提示：关注主角、天气和情绪滑块。"
+        },
+        { 
+            id: 2, 
+            title: "进阶课：快乐太空猫", 
+            desc: "风格转换测试！我们需要一张 <b>手机抓拍(Real)</b> 风格的照片。<br>主角是一只 <b>大笑(Laughing)</b> 的 <b>宇航员猫咪(Cat)</b>。", 
+            requirements: { "style-select": "real", "subject-select": "cat", "emotion-slider": "2" },
+            hint: "提示：别忘了把风格切换回'手机抓拍'。"
+        },
+        { 
+            id: 3, 
+            title: "光影课：霓虹武士", 
+            desc: "学习光影的使用。请创作一位 <b>古代剑客(Warrior)</b>，<br>他站在 <b>赛博霓虹(Neon)</b> 的灯光下，且要是 <b>电影大片(Cinema)</b> 质感。", 
+            requirements: { "subject-select": "warrior", "light-select": "neon", "style-select": "cinema" },
+            hint: "提示：光照选择'赛博霓虹'能带来强烈的对比。"
+        },
+        { 
+            id: 4, 
+            title: "构图课：特写魔法师", 
+            desc: "运镜决定了画面的冲击力。<br>请给 <b>魔法师(Wizard)</b> 拍一张 <b>极度特写(Extreme Close-up)</b>，要能看清他的胡须！", 
+            requirements: { "subject-select": "wizard", "zoom-slider": "0" },
+            hint: "提示：将运镜滑块拉到最左边。"
+        },
+        { 
+            id: 5, 
+            title: "毕业考：霍比特人的雪景", 
+            desc: "综合考验！我们需要一张 <b>3D渲染(3D)</b> 风格的壁纸。<br>场景是 <b>下雪(Snow)</b> 的 <b>霍比特小屋(House)</b>，采用 <b>航拍视角(Drone)</b>。", 
+            requirements: { "subject-select": "house", "style-select": "3d", "weather-select": "snow", "zoom-slider": "4" },
+            hint: "提示：你需要同时调整四个参数！"
+        }
     ];
     
     let currentLockedSeed = null; let isChallengeActive = false; let currentLevel = 0;
