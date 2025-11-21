@@ -6,152 +6,533 @@
     <title>DreamSnap - AI 探索实验室</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* 把截图里的样式都整合在这里了 */
-        :root { --primary-color: #FF6B6B; --secondary-color: #4ECDC4; --bg-color: #F7F9FC; --card-bg: #FFFFFF; --text-color: #2D3436; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { max-width: 1100px; width: 100%; background: var(--card-bg); border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; text-align: center; }
-        .workspace { display: flex; gap: 40px; align-items: flex-start; text-align: left; margin-top: 30px; }
-        .panel-left { flex: 1; min-width: 300px; }
-        .panel-right { flex: 1.3; position: sticky; top: 20px; background: var(--card-bg); z-index: 10; }
-        @media (max-width: 768px) { .workspace { flex-direction: column; } .panel-right { position: static; width: 100%; } }
-        h1 { font-size: 2.5rem; color: var(--primary-color); margin: 0 0 5px 0; }
-        .tabs { display: flex; justify-content: center; background: #EEE; border-radius: 50px; padding: 5px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 40px; font-weight: bold; cursor: pointer; color: #666; }
-        .tab-btn.active { background: var(--primary-color); color: white; }
-        .mode-content { display: none; animation: fadeIn 0.5s; }
-        .mode-content.active { display: block; }
-        .control-group { background: #FAFAFA; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #EEE; }
-        .control-label { font-weight: bold; margin-bottom: 8px; display: block; }
-        select, input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #DDD; box-sizing: border-box; }
-        .magic-btn { width: 100%; border-radius: 15px; border: none; background: linear-gradient(145deg, #FF6B6B, #FF8E8E); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; }
-        .viewfinder { width: 100%; aspect-ratio: 3/2; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 5px solid #FFF; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 15px; }
+        /* --- 高保真样式系统 --- */
+        :root {
+            --primary: #FF6B6B;
+            --primary-hover: #FF5252;
+            --secondary: #4ECDC4;
+            --bg: #F0F4F8; /* 更柔和的背景灰 */
+            --card-bg: #FFFFFF;
+            --text-main: #2D3436;
+            --text-sub: #636E72;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* 标题区 */
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #FF6B6B, #FF9F43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 10px 0;
+            text-align: center;
+            letter-spacing: -1px;
+        }
+        .subtitle { text-align: center; color: var(--text-sub); margin-bottom: 30px; }
+
+        /* 导航标签 - 模仿胶囊样式 */
+        .tabs {
+            display: inline-flex;
+            background: #F1F2F6;
+            padding: 6px;
+            border-radius: 50px;
+            margin: 0 auto 40px auto;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            padding: 10px 25px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        /* 布局 */
+        .workspace {
+            display: flex;
+            gap: 50px;
+            align-items: flex-start;
+        }
+        .panel-left { flex: 1; min-width: 320px; }
+        .panel-right { 
+            flex: 1.4; 
+            position: sticky; 
+            top: 20px; 
+            background: var(--card-bg); 
+            z-index: 10;
+            padding-bottom: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .workspace { flex-direction: column; }
+            .panel-right { position: static; width: 100%; }
+            .container { padding: 20px; }
+        }
+
+        /* 控制项卡片化 */
+        .control-group {
+            margin-bottom: 20px;
+            background: #FFFFFF;
+            /* 稍微加一点边框让它更清晰 */
+            border: 1px solid #EEE;
+            border-radius: 16px;
+            padding: 15px 20px;
+            transition: transform 0.2s;
+        }
+        .control-group:hover { border-color: #DDD; }
+
+        .control-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- 🎨 高级 UI 组件复刻 --- */
+
+        /* 1. 下拉框 Select */
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 2px solid #F1F2F6;
+            background-color: #FAFBFC;
+            font-size: 1rem;
+            color: #2D3436;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+        select:focus { border-color: var(--secondary); background: #FFF; }
+
+        /* 2. 现代化滑块 Range Slider (重点优化) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        /* 滑轨 */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #DFE6E9;
+            border-radius: 5px;
+        }
+        /* 滑块头 */
+        input[type=range]::-webkit-slider-thumb {
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px; /* 居中 */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 2px solid #FFF;
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+        /* 3. 魔法按钮 Button */
+        .magic-btn {
+            width: 100%;
+            border: none;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .magic-btn:active { transform: scale(0.96); box-shadow: 0 5px 10px rgba(255, 107, 107, 0.3); }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .copy-btn { background: #74B9FF; margin-right: 10px; }
+        .download-btn { background: #00CEC9; }
+        .optimize-btn { background: #a29bfe; width: 100%; margin-top: 12px; padding: 14px; border:none; border-radius:14px; color:white; font-weight:bold; cursor:pointer;}
+        .save-btn { background: #ff7675; width: 100%; margin-top: 10px; padding: 14px; border:none; border-radius:14px; color:white; font-weight:bold; cursor:pointer;}
+
+        /* 4. 取景器与黑框 */
+        .viewfinder {
+            width: 100%;
+            aspect-ratio: 3/2;
+            background: #2d3436;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-md);
+            border: 4px solid #FFF;
+        }
         .viewfinder img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; }
-        .spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; display: none; }
-        .output-box { background: #2D3436; color: #dfe6e9; padding: 20px; border-radius: 15px; font-family: monospace; min-height: 80px; line-height: 1.6; word-break: break-word; }
-        .token-style { color: #FF7675; } .token-subject { color: #74B9FF; } .token-emotion { color: #A29BFE; } .token-env { color: #FD79A8; } .token-zoom { color: #55EFC4; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
-        .gallery-card { height: 140px; perspective: 1000px; cursor: pointer; }
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .gallery-card:hover .card-inner, .gallery-card.flipped .card-inner { transform: rotateY(180deg); }
+        
+        .output-box {
+            background: #1e272e; /* 更深邃的黑 */
+            color: #dfe6e9;
+            padding: 20px;
+            border-radius: 16px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8; /* 更大的行高 */
+            margin-top: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            border: 1px solid #353b48;
+            min-height: 100px;
+        }
+
+        /* 5. 彩虹语法高亮 (鲜艳版) */
+        .token-style { color: #ff7675; font-weight:bold; } 
+        .token-subject { color: #74b9ff; font-weight:bold; } 
+        .token-emotion { color: #a29bfe; font-weight:bold; } 
+        .token-env { color: #fd79a8; font-weight:bold; } 
+        .token-zoom { color: #55efc4; font-weight:bold; } 
+        .token-base { color: #b2bec3; font-size: 0.9em; }
+
+        /* 任务板 */
+        #mission-board {
+            background: #fff3cd;
+            border: 2px solid #ffeeba;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        /* 辅助动画 */
+        .spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: rgba(0,0,0,0.8); padding: 12px 24px; border-radius: 30px; display: none; font-weight:bold; backdrop-filter: blur(5px); }
+        .mode-content { display: none; animation: fadeIn 0.4s; }
+        .mode-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 画廊 */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 30px; }
+        .gallery-card { height: 150px; perspective: 1000px; cursor: pointer; }
+        .card-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 15px; box-shadow: var(--shadow-sm); position: relative; }
+        .gallery-card:hover .card-inner { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; overflow: hidden; }
         .card-front img { width: 100%; height: 100%; object-fit: cover; }
-        .card-back { background: #2D3436; color: #81ECEC; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 10px; font-size: 0.6rem; overflow: auto; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .action-btn { flex: 1; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; margin-right:5px;}
-        .copy-btn { background: #74B9FF; } .download-btn { background: #4ECDC4; }
-        .optimize-btn, .save-btn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 15px; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .optimize-btn { background: #A29BFE; } .save-btn { background: #FF7675; }
+        .card-back { background: #2D3436; color: #81ECEC; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 10px; font-size: 0.7rem; overflow: hidden; }
+
     </style>
 </head>
 <body>
+
 <div class="container">
     <h1>✨ DreamSnap</h1>
+    <p class="subtitle">可视化的 AI 逻辑实验室</p>
+
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('auto')">🎲 自动造梦</button>
         <button class="tab-btn" onclick="switchTab('manual')">🛠️ 人工实验室</button>
         <button class="tab-btn" onclick="switchTab('challenge')">🏆 挑战任务</button>
     </div>
+
     <div class="workspace">
         <div class="panel-left">
+            
             <div id="auto-mode" class="mode-content active">
-                <div class="control-group" style="text-align:center; border:none; background:transparent; padding-top:40px;">
+                <div class="control-group" style="text-align:center; border:none; background:transparent; padding-top:60px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎲</div>
+                    <p style="color:#636E72; line-height:1.6;">点击魔法按钮<br>随机生成无限灵感</p>
                     <button class="magic-btn" onclick="generateAutoPrompt()">✨ 立即造梦</button>
                 </div>
             </div>
+
             <div id="manual-mode" class="mode-content">
-                <div id="mission-board" style="display:none; background:#FFF3CD; border:2px solid #FFC107; border-radius:15px; padding:15px; margin-bottom:20px;">
-                    <h3 style="margin:0; color:#856404;">🚩 <span id="level-title">Level 1</span></h3>
-                    <p id="mission-desc" style="color:#856404; font-size:0.9rem;">加载中...</p>
-                    <ul id="mission-checklist" style="padding-left:20px; font-size:0.9rem;"></ul>
-                    <button id="next-level-btn" onclick="nextLevel()" style="display:none; width:100%; background:#2ecc71; color:white; border:none; padding:10px; border-radius:20px; margin-top:10px; cursor:pointer;">🎉 下一关</button>
+                
+                <div id="mission-board" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="margin:0; color:#856404; font-size:1.1rem;">🚩 <span id="level-title">Level 1</span></h3>
+                        <span style="background:#FFC107; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:bold;">进行中</span>
+                    </div>
+                    <p id="mission-desc" style="color:#856404; font-size:0.95rem; margin-bottom:15px; line-height:1.5;">加载中...</p>
+                    <ul id="mission-checklist" style="padding-left:0; list-style:none; font-size:0.9rem; background:rgba(255,255,255,0.5); padding:10px; border-radius:10px;"></ul>
+                    <button id="next-level-btn" onclick="nextLevel()" style="display:none; width:100%; background:#2ecc71; color:white; border:none; padding:12px; border-radius:12px; margin-top:15px; font-weight:bold; cursor:pointer; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);">🎉 挑战成功！进入下一关</button>
                 </div>
-                <div class="control-group"><label class="control-label">👤 主角</label><select id="subject-select" onchange="handleUpdate()"><option value="girl">赛博少女</option><option value="cat">宇航员猫咪</option><option value="robot">复古机器人</option><option value="wizard">魔法师</option><option value="house">霍比特小屋</option></select></div>
-                <div class="control-group"><label class="control-label">😊 情绪</label><input type="range" id="emotion-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()"></div>
-                <div class="control-group"><label class="control-label">🎨 风格</label><select id="style-select" onchange="handleUpdate()"><option value="real">手机抓拍</option><option value="cinema">电影大片</option><option value="3d">3D渲染</option><option value="pixel">像素艺术</option></select></div>
-                <div class="control-group"><label class="control-label">💡 光照</label><select id="light-select" onchange="handleUpdate()"><option value="natural">自然光</option><option value="neon">赛博霓虹</option></select></div>
-                <div class="control-group"><label class="control-label">🌦️ 天气</label><select id="weather-select" onchange="handleUpdate()"><option value="clear">晴朗</option><option value="rain">下雨</option></select></div>
-                <div class="control-group"><label class="control-label">📷 运镜</label><input type="range" id="zoom-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()"></div>
-                <div style="background:#e8f0fe; padding:10px; border-radius:10px; display:flex; justify-content:space-between;"><span>🧪 实验模式 (Seed Lock)</span><input type="checkbox" id="seed-lock" onchange="toggleSeedLock()"></div>
-                <button class="magic-btn" onclick="manualSnap()">📸 点击显影</button>
+
+                <div class="control-group">
+                    <label class="control-label">👤 主角 (Subject)</label>
+                    <select id="subject-select" onchange="handleUpdate()">
+                        <option value="girl">👩‍🎤 赛博少女</option>
+                        <option value="cat">🐱 宇航员猫咪</option>
+                        <option value="warrior">⚔️ 古代剑客</option>
+                        <option value="robot">🤖 复古机器人</option>
+                        <option value="wizard">🧙‍♂️ 魔法师</option>
+                        <option value="house">🏠 霍比特小屋</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">😊 情绪 (Emotion)</label>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:1.2rem; color:#B2BEC3;">
+                        <span>😢</span><span>😐</span><span>😆</span><span>😡</span><span>😲</span>
+                    </div>
+                    <input type="range" id="emotion-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()">
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">🎨 风格 (Style)</label>
+                    <select id="style-select" onchange="handleUpdate()">
+                        <option value="real">📱 手机抓拍 (Real)</option>
+                        <option value="cinema">🎬 电影大片 (Cinema)</option>
+                        <option value="3d">🧸 3D 渲染 (3D)</option>
+                        <option value="anime">🇯🇵 动漫风格 (Anime)</option>
+                        <option value="pixel">👾 像素艺术 (Pixel)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">💡 光照 (Lighting)</label>
+                    <select id="light-select" onchange="handleUpdate()">
+                        <option value="natural">☀️ 自然光</option>
+                        <option value="studio">🔦 摄影棚光</option>
+                        <option value="neon">🌃 赛博霓虹</option>
+                        <option value="moon">🌙 月光</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">🌦️ 天气 (Weather)</label>
+                    <select id="weather-select" onchange="handleUpdate()">
+                        <option value="clear">☀️ 晴朗</option>
+                        <option value="rain">🌧️ 下雨</option>
+                        <option value="snow">❄️ 下雪</option>
+                        <option value="fog">🌫️ 雾天</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">📷 运镜 (Zoom)</label>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.8rem; color:#B2BEC3;">
+                        <span>特写</span><span>全身</span><span>航拍</span>
+                    </div>
+                    <input type="range" id="zoom-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()">
+                </div>
+
+                <div style="background:#E3F2FD; padding:15px; border-radius:16px; display:flex; align-items:center; justify-content:space-between; border:1px solid #BBDEFB;">
+                    <div>
+                        <span style="font-weight:bold; color:#1565C0; display:block;">🧪 实验模式 (Seed Lock)</span>
+                        <span style="font-size:0.8rem; color:#1976D2;">锁定构图，只换元素</span>
+                    </div>
+                    <input type="checkbox" id="seed-lock" onchange="toggleSeedLock()" style="width:24px; height:24px; cursor:pointer; accent-color:#2196F3;">
+                </div>
+
+                <button class="magic-btn" onclick="manualSnap()">📸 点击显影 (Snap)</button>
             </div>
         </div>
+
         <div class="panel-right">
             <div class="viewfinder">
                 <div id="loading-spinner" class="spinner">🔮 正在显影...</div>
-                <img id="preview-img" src="https://placehold.co/600x400/2D3436/FFF?text=Ready+to+Dream" alt="Preview">
+                <img id="preview-img" src="https://placehold.co/800x533/2d3436/FFF?text=Ready+to+Dream" alt="Preview">
             </div>
+
             <div class="output-box" id="prompt-result" data-raw="">等待指令中... 🤖</div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
+
+            <div style="display:flex; gap:15px; margin-top:20px;">
                 <button class="action-btn copy-btn" onclick="copyToClipboard()">📋 复制</button>
                 <button class="action-btn download-btn" onclick="downloadImage()">⬇️ 下载</button>
             </div>
-            <button class="optimize-btn" onclick="optimizePrompt()">✨ 魔法优化</button>
-            <button class="save-btn" onclick="saveToGallery()">❤️ 收藏进画廊</button>
+            
+            <button class="optimize-btn" onclick="optimizePrompt()">✨ 魔法优化 (Magic Optimize)</button>
+            <button class="save-btn" onclick="saveToGallery()">❤️ 收藏进画廊 (Save)</button>
         </div>
     </div>
-    <div class="gallery-section"><h2>🖼️ 梦境画廊</h2><div id="gallery-grid" class="gallery-grid"></div><button onclick="clearGallery()" style="background:none; border:none; color:#999; margin-top:20px; cursor:pointer;">🗑️ 清空画廊</button></div>
+
+    <div style="margin-top:60px; border-top:2px dashed #dfe6e9; padding-top:40px;">
+        <h2 style="text-align:center; color:#2d3436;">🖼️ 梦境画廊</h2>
+        <div id="gallery-grid" class="gallery-grid"></div>
+        <div style="text-align:center; margin-top:20px;">
+            <button onclick="clearGallery()" style="background:none; border:none; color:#b2bec3; cursor:pointer; text-decoration:underline;">🗑️ 清空画廊</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // --- 这里就是把你截图里所有tsx文件合并后的逻辑 ---
+    // --- 逻辑部分 (保持不变，功能核心) ---
     const manualData = {
         subjects: { "girl": "cyberpunk girl, neon hair", "cat": "cute tabby cat astronaut", "robot": "vintage tin robot", "wizard": "gandalf wizard", "house": "hobbit house" },
         emotions: ["crying", "neutral", "laughing", "angry", "surprised"],
         zooms: ["extreme close-up", "portrait", "medium shot", "full body", "drone view"],
         styles: { "real": "hyper-realistic, 8k", "cinema": "cinematic movie scene", "3d": "3D render", "pixel": "pixel art" },
-        lightings: { "natural": "soft sunlight", "neon": "neon lights" },
-        weathers: { "clear": "clear sky", "rain": "heavy rain" }
+        lightings: { "natural": "soft sunlight", "neon": "neon lights", "studio": "studio lighting", "moon": "moonlight" },
+        weathers: { "clear": "clear sky", "rain": "heavy rain", "snow": "snowing", "fog": "foggy" }
     };
+    
     const missions = [
-        { id: 1, title: "悲伤的雨夜", desc: "生成: **雨中** 的 **悲伤** **赛博少女**", requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" } }
+        { id: 1, title: "悲伤的雨夜", desc: "生成一张在 <b>雨中(Rain)</b> 的 <b>悲伤(Crying)</b> 的 <b>赛博少女(Girl)</b>。", requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" } },
+        { id: 2, title: "快乐的猫", desc: "生成一张 <b>大笑(Laughing)</b> 的 <b>宇航员猫咪</b>。", requirements: { "subject-select": "cat", "emotion-slider": "2" } }
     ];
+    
     let currentLockedSeed = null; let isChallengeActive = false; let currentLevel = 0;
 
-    function handleUpdate() { updateManualPrompt(); if(isChallengeActive) checkMissionProgress(); }
+    // 初始化
+    window.onload = function() {
+        handleUpdate(); // 页面加载时先刷新一次文字颜色
+        renderGallery();
+    };
+
+    function handleUpdate() { 
+        updateManualPrompt(); 
+        if(isChallengeActive) checkMissionProgress(); 
+    }
+    
     function updateManualPrompt() {
-        const s = document.getElementById('subject-select').value, e = document.getElementById('emotion-slider').value, z = document.getElementById('zoom-slider').value, st = document.getElementById('style-select').value, l = document.getElementById('light-select').value, w = document.getElementById('weather-select').value;
+        const s = document.getElementById('subject-select').value;
+        const e = document.getElementById('emotion-slider').value;
+        const z = document.getElementById('zoom-slider').value;
+        const st = document.getElementById('style-select').value;
+        const l = document.getElementById('light-select').value;
+        const w = document.getElementById('weather-select').value;
+
+        // 构建Raw
         const raw = `${manualData.styles[st]||st}, ${manualData.subjects[s]||s}, ${manualData.emotions[e]||e}, ${manualData.lightings[l]||l}, ${manualData.weathers[w]||w}, ${manualData.zooms[z]||z}, best quality.`;
         document.getElementById('prompt-result').setAttribute('data-raw', raw);
-        document.getElementById('prompt-result').innerHTML = `<span class="token-style">[风格] ${st}</span> <span class="token-subject">[主体] ${s}</span> ...`;
+        
+        // 构建高亮HTML
+        const html = `
+            <div style="margin-bottom:5px;"><span class="token-style">[风格] ${st}</span></div>
+            <div style="margin-bottom:5px;"><span class="token-subject">[主体] ${s}</span></div>
+            <div style="margin-bottom:5px;"><span class="token-emotion">[情绪] ${manualData.emotions[e]}</span></div>
+            <div style="margin-bottom:5px;"><span class="token-env">[光照] ${l}</span> <span class="token-env">[天气] ${w}</span></div>
+            <div><span class="token-zoom">[运镜] ${manualData.zooms[z]}</span></div>
+            <div class="token-base" style="margin-top:8px; opacity:0.5;">best quality, masterpiece.</div>
+        `;
+        document.getElementById('prompt-result').innerHTML = html;
     }
+
     function generateAutoPrompt() { 
         const raw = "A mystical forest spirit, glowing lights, masterpiece, 8k.";
-        document.getElementById('prompt-result').setAttribute('data-raw', raw); document.getElementById('prompt-result').innerText = raw; runNanoBanana(raw); 
+        document.getElementById('prompt-result').setAttribute('data-raw', raw); 
+        document.getElementById('prompt-result').innerHTML = `<span style="color:#a29bfe">${raw}</span>`; 
+        runNanoBanana(raw); 
     }
+    
     function manualSnap() { runNanoBanana(document.getElementById('prompt-result').getAttribute('data-raw')); }
+    
     function runNanoBanana(prompt) {
         const img = document.getElementById('preview-img'); const spin = document.getElementById('loading-spinner');
-        spin.style.display='block'; img.style.opacity='0.5';
+        spin.style.display='block'; img.style.opacity='0.3';
         let seed = currentLockedSeed !== null ? currentLockedSeed : Math.floor(Math.random()*9999);
-        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=400&seed=${seed}&nologo=true`;
+        // 增加随机参数避免缓存
+        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=533&seed=${seed}&nologo=true&t=${Date.now()}`;
         img.onload = () => { spin.style.display='none'; img.style.opacity='1'; };
     }
+
     function switchTab(mode) {
         document.querySelectorAll('.mode-content').forEach(d=>d.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById('mission-board').style.display='none'; isChallengeActive=false;
         if(mode==='auto'){document.getElementById('auto-mode').classList.add('active');document.querySelectorAll('.tab-btn')[0].classList.add('active');}
-        else{document.getElementById('manual-mode').classList.add('active'); if(mode==='challenge'){document.getElementById('mission-board').style.display='block';isChallengeActive=true;loadMission(0);}else{document.querySelectorAll('.tab-btn')[1].classList.add('active');}}
+        else{
+            document.getElementById('manual-mode').classList.add('active'); 
+            if(mode==='challenge'){
+                document.getElementById('mission-board').style.display='block';isChallengeActive=true;loadMission(0);
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            }else{
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            }
+        }
     }
+
     function loadMission(idx){ 
         if(idx>=missions.length){alert("通关!");return;}
         const m=missions[idx]; document.getElementById('level-title').innerText=`Level ${m.id}`; document.getElementById('mission-desc').innerHTML=m.desc;
+        checkMissionProgress();
     }
+    
     function checkMissionProgress(){ 
         const m=missions[0]; 
         const list=document.getElementById('mission-checklist'); list.innerHTML="";
         let all=true; 
         for(const [k,v] of Object.entries(m.requirements)){
-            const match = document.getElementById(k).value === v; if(!match) all=false;
-            list.innerHTML += `<li>${match?'✅':'❌'} ${k}</li>`;
+            const el = document.getElementById(k);
+            const match = el.value === v; if(!match) all=false;
+            // 获取Label
+            let label = k;
+            if(el.parentElement.querySelector('label')) label = el.parentElement.querySelector('label').innerText.split(' ')[0];
+            list.innerHTML += `<li style="margin-bottom:5px; color:${match?'#00b894':'#d63031'};"> ${match?'✅':'❌'} <b>${label}</b> 匹配</li>`;
         }
-        if(all) document.getElementById('next-level-btn').style.display='block';
+        if(all) {
+            document.getElementById('next-level-btn').style.display='block';
+            confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }});
+        }
     }
+
     function toggleSeedLock(){ const l=document.getElementById('seed-lock').checked; if(l&&!currentLockedSeed)currentLockedSeed=Math.floor(Math.random()*9999); if(!l)currentLockedSeed=null; }
-    function optimizePrompt(){ manualSnap(); } 
-    function copyToClipboard(){ navigator.clipboard.writeText(document.getElementById('prompt-result').getAttribute('data-raw')); }
+    function optimizePrompt(){ 
+        let raw = document.getElementById('prompt-result').getAttribute('data-raw');
+        raw += ", highly detailed, dramatic lighting, 8k resolution";
+        document.getElementById('prompt-result').setAttribute('data-raw', raw);
+        manualSnap();
+    } 
+    function copyToClipboard(){ navigator.clipboard.writeText(document.getElementById('prompt-result').getAttribute('data-raw')).then(()=>alert("已复制！")); }
     function downloadImage(){ const a=document.createElement('a'); a.href=document.getElementById('preview-img').src; a.download='dream.webp'; a.click(); }
-    function saveToGallery(){ const u=document.getElementById('preview-img').src; const g=document.getElementById('gallery-grid'); g.innerHTML+=`<div class="gallery-card"><img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>`; }
+    
+    function saveToGallery(){ 
+        const u=document.getElementById('preview-img').src; 
+        const p=document.getElementById('prompt-result').innerText;
+        const g=document.getElementById('gallery-grid'); 
+        // 本地存储逻辑可在此扩展
+        g.innerHTML=`<div class="gallery-card"><div class="card-inner"><div class="card-front"><img src="${u}"></div><div class="card-back">${p.substring(0,50)}...</div></div></div>` + g.innerHTML; 
+    }
     function clearGallery(){ document.getElementById('gallery-grid').innerHTML=""; }
+    
+    // 初始渲染画廊
+    function renderGallery() {} 
 </script>
 </body>
 </html>
