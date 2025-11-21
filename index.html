@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DreamSnap - 梦境快门</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#FF6B6B',
+              secondary: '#4ECDC4',
+              accent: '#FFE66D',
+              dark: '#2D3436',
+              paper: '#F7F9FC',
+            },
+            fontFamily: {
+              sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+      :root {
+        --secondary-color: #4ECDC4;
+        --card-bg: #FFFFFF;
+      }
+
+      body {
+        background-color: #F7F9FC;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+
+      /* --- 🏗️ 响应式双栏布局 (Grid System) --- */
+        
+      /* 大容器调整 */
+      .container {
+          width: 100%;
+          max-width: 1000px; /* 增加最大宽度，给双栏更多空间 */
+          padding: 30px;
+          margin: 0 auto; /* Center it */
+          background: var(--card-bg);
+          border-radius: 40px; 
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          position: relative;
+      }
+
+      /* 工作区容器 */
+      .workspace {
+          display: flex;
+          gap: 40px; /* 左右栏间距 */
+          align-items: flex-start; /* 顶部对齐 */
+          text-align: left; /* 内容左对齐 */
+          margin-top: 20px;
+      }
+
+      /* 左侧面板 */
+      .panel-left {
+          flex: 1; /* 占比 1 */
+          min-width: 300px; /* 最小宽度，防止挤压 */
+      }
+
+      /* 右侧面板 */
+      .panel-right {
+          flex: 1.2; /* 占比 1.2 (给图片更多空间) */
+          position: sticky; /* ✨ 关键：吸顶效果 */
+          top: 20px; /* 距离顶部20px时固定 */
+          background: var(--card-bg);
+          z-index: 10;
+          border-radius: 20px; /* Optional: smooth edges */
+      }
+
+      /* 📱 移动端适配 (Media Query) */
+      /* 当屏幕宽度小于 768px (平板/手机) 时，变为上下布局 */
+      @media (max-width: 768px) {
+          .workspace {
+              flex-direction: column; 
+              gap: 20px;
+          }
+
+          .panel-right {
+              position: static; /* 手机上取消吸顶，改为自然流 */
+              width: 100%;
+          }
+          
+          .panel-left {
+              width: 100%;
+          }
+          
+          .container {
+              padding: 20px; /* 手机上减少内边距 */
+              border-radius: 20px;
+          }
+      }
+
+      /* --- 收藏按钮样式 (Reference) --- */
+      .save-btn {
+          background: #FF7675;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 20px;
+          margin-top: 10px; 
+          margin-left: 10px;
+          cursor: pointer;
+          font-weight: bold;
+          box-shadow: 0 4px 10px rgba(255, 118, 117, 0.3);
+      }
+
+      /* --- 画廊网格布局 --- */
+      .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* 自适应列宽 */
+          gap: 15px;
+          margin-top: 20px;
+      }
+
+      /* --- 3D 翻转卡片容器 --- */
+      .gallery-card {
+          background-color: transparent;
+          height: 150px; /* 卡片高度 */
+          perspective: 1000px; /* 3D 透视 */
+          cursor: pointer;
+      }
+
+      /* 卡片内部支撑 */
+      .card-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          text-align: center;
+          transition: transform 0.6s;
+          transform-style: preserve-3d;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          border-radius: 15px;
+      }
+
+      /* 鼠标悬停或点击时翻转 */
+      .gallery-card:hover .card-inner, .gallery-card.flipped .card-inner {
+          transform: rotateY(180deg);
+      }
+
+      /* 正面和背面公共样式 */
+      .card-front, .card-back {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          border-radius: 15px;
+          overflow: hidden;
+      }
+
+      /* 正面：图片 */
+      .card-front img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+      }
+
+      /* 背面：文字 */
+      .card-back {
+          background-color: #2D3436;
+          color: #81ECEC;
+          transform: rotateY(180deg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
+          font-size: 0.7rem;
+          text-align: left;
+          overflow-y: auto; /* 文字太长可滚动 */
+      }
+
+      /* --- 下载按钮样式 --- */
+      .download-btn {
+          background: var(--secondary-color);
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-weight: bold;
+          box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+          transition: filter 0.3s, transform 0.1s;
+      }
+      .download-btn:hover {
+          filter: brightness(1.1);
+      }
+      .download-btn:active {
+          transform: scale(0.98);
+      }
+
+      /* --- 优化按钮样式 --- */
+      .optimize-btn {
+          background: #BADA55; /* 醒目的绿色 */
+          color: white;
+          border: none;
+          padding: 12px 25px; /* 稍微大一点 */
+          border-radius: 25px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 1.1rem;
+          margin-top: 15px;
+          margin-bottom: 10px;
+          box-shadow: 0 5px 15px rgba(186, 218, 85, 0.4);
+          transition: transform 0.2s, filter 0.3s;
+          width: 100%; /* 占满一行 */
+      }
+      .optimize-btn:hover {
+          filter: brightness(1.1);
+      }
+      .optimize-btn:active {
+          transform: scale(0.98);
+      }
+
+      /* --- 🌈 彩虹提示词样式 --- */
+      .token-style { color: #FF7675; font-weight: bold; } /* 风格 - 红 */
+      .token-subject { color: #74B9FF; font-weight: bold; } /* 主体 - 蓝 */
+      .token-emotion { color: #A29BFE; font-weight: bold; } /* 情绪 - 紫 */
+      .token-zoom { color: #55EFC4; font-weight: bold; } /* 镜头 - 绿 */
+      .token-base { color: #B2BEC3; } /* 基础词 - 灰 */
+      .token-light { color: #FDCB6E; font-weight: bold; } /* 光照 - 金 */
+      .token-weather { color: #00CEC9; font-weight: bold; } /* 天气 - 青 */
+      .token-env { color: #FD79A8; font-weight: bold; cursor: help; border-bottom: 1px dotted currentColor; } /* 统一环境 - 粉 */
+
+      /* 优化后的 output-box 文字大小和行高 */
+      .output-box {
+          font-size: 1.1rem;
+          line-height: 1.6;
+          font-family: 'Segoe UI', Tahoma, sans-serif; /* 不用等宽字体了，用易读字体 */
+      }
+
+      /* --- 🎓 知识点悬浮 (Tooltips) --- */
+        
+      /* 让彩色词汇支持悬停交互 */
+      .token-style, .token-subject, .token-emotion, .token-zoom, .token-base, .token-light, .token-weather, .token-env {
+          position: relative;
+          cursor: help; /* 鼠标变成问号 */
+          border-bottom: 1px dotted currentColor; /* 虚线强调 */
+      }
+
+      /* 悬浮气泡 (Tooltip) */
+      [data-tooltip]:hover::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: 120%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: #fff;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: normal;
+          white-space: nowrap;
+          z-index: 100;
+          pointer-events: none;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      }
+
+      /* 小三角 */
+      [data-tooltip]:hover::before {
+          content: '';
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 6px solid transparent;
+          border-top-color: rgba(0, 0, 0, 0.8);
+      }
+
+      /* 开关样式 */
+      .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+      .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+      input:checked + .slider { background-color: #2196F3; }
+      input:checked + .slider:before { transform: translateX(22px); }
+
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
