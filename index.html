@@ -1,307 +1,157 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DreamSnap - 梦境快门</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: '#FF6B6B',
-              secondary: '#4ECDC4',
-              accent: '#FFE66D',
-              dark: '#2D3436',
-              paper: '#F7F9FC',
-            },
-            fontFamily: {
-              sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
-            }
-          }
-        }
-      }
-    </script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamSnap - AI 探索实验室</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-      :root {
-        --secondary-color: #4ECDC4;
-        --card-bg: #FFFFFF;
-      }
-
-      body {
-        background-color: #F7F9FC;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-      }
-
-      /* --- 🏗️ 响应式双栏布局 (Grid System) --- */
-        
-      /* 大容器调整 */
-      .container {
-          width: 100%;
-          max-width: 1000px; /* 增加最大宽度，给双栏更多空间 */
-          padding: 30px;
-          margin: 0 auto; /* Center it */
-          background: var(--card-bg);
-          border-radius: 40px; 
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-          position: relative;
-      }
-
-      /* 工作区容器 */
-      .workspace {
-          display: flex;
-          gap: 40px; /* 左右栏间距 */
-          align-items: flex-start; /* 顶部对齐 */
-          text-align: left; /* 内容左对齐 */
-          margin-top: 20px;
-      }
-
-      /* 左侧面板 */
-      .panel-left {
-          flex: 1; /* 占比 1 */
-          min-width: 300px; /* 最小宽度，防止挤压 */
-      }
-
-      /* 右侧面板 */
-      .panel-right {
-          flex: 1.2; /* 占比 1.2 (给图片更多空间) */
-          position: sticky; /* ✨ 关键：吸顶效果 */
-          top: 20px; /* 距离顶部20px时固定 */
-          background: var(--card-bg);
-          z-index: 10;
-          border-radius: 20px; /* Optional: smooth edges */
-      }
-
-      /* 📱 移动端适配 (Media Query) */
-      /* 当屏幕宽度小于 768px (平板/手机) 时，变为上下布局 */
-      @media (max-width: 768px) {
-          .workspace {
-              flex-direction: column; 
-              gap: 20px;
-          }
-
-          .panel-right {
-              position: static; /* 手机上取消吸顶，改为自然流 */
-              width: 100%;
-          }
-          
-          .panel-left {
-              width: 100%;
-          }
-          
-          .container {
-              padding: 20px; /* 手机上减少内边距 */
-              border-radius: 20px;
-          }
-      }
-
-      /* --- 收藏按钮样式 (Reference) --- */
-      .save-btn {
-          background: #FF7675;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 20px;
-          margin-top: 10px; 
-          margin-left: 10px;
-          cursor: pointer;
-          font-weight: bold;
-          box-shadow: 0 4px 10px rgba(255, 118, 117, 0.3);
-      }
-
-      /* --- 画廊网格布局 --- */
-      .gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* 自适应列宽 */
-          gap: 15px;
-          margin-top: 20px;
-      }
-
-      /* --- 3D 翻转卡片容器 --- */
-      .gallery-card {
-          background-color: transparent;
-          height: 150px; /* 卡片高度 */
-          perspective: 1000px; /* 3D 透视 */
-          cursor: pointer;
-      }
-
-      /* 卡片内部支撑 */
-      .card-inner {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          text-align: center;
-          transition: transform 0.6s;
-          transform-style: preserve-3d;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-          border-radius: 15px;
-      }
-
-      /* 鼠标悬停或点击时翻转 */
-      .gallery-card:hover .card-inner, .gallery-card.flipped .card-inner {
-          transform: rotateY(180deg);
-      }
-
-      /* 正面和背面公共样式 */
-      .card-front, .card-back {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          -webkit-backface-visibility: hidden;
-          backface-visibility: hidden;
-          border-radius: 15px;
-          overflow: hidden;
-      }
-
-      /* 正面：图片 */
-      .card-front img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-      }
-
-      /* 背面：文字 */
-      .card-back {
-          background-color: #2D3436;
-          color: #81ECEC;
-          transform: rotateY(180deg);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 10px;
-          font-size: 0.7rem;
-          text-align: left;
-          overflow-y: auto; /* 文字太长可滚动 */
-      }
-
-      /* --- 下载按钮样式 --- */
-      .download-btn {
-          background: var(--secondary-color);
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 20px;
-          cursor: pointer;
-          font-weight: bold;
-          box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
-          transition: filter 0.3s, transform 0.1s;
-      }
-      .download-btn:hover {
-          filter: brightness(1.1);
-      }
-      .download-btn:active {
-          transform: scale(0.98);
-      }
-
-      /* --- 优化按钮样式 --- */
-      .optimize-btn {
-          background: #BADA55; /* 醒目的绿色 */
-          color: white;
-          border: none;
-          padding: 12px 25px; /* 稍微大一点 */
-          border-radius: 25px;
-          cursor: pointer;
-          font-weight: bold;
-          font-size: 1.1rem;
-          margin-top: 15px;
-          margin-bottom: 10px;
-          box-shadow: 0 5px 15px rgba(186, 218, 85, 0.4);
-          transition: transform 0.2s, filter 0.3s;
-          width: 100%; /* 占满一行 */
-      }
-      .optimize-btn:hover {
-          filter: brightness(1.1);
-      }
-      .optimize-btn:active {
-          transform: scale(0.98);
-      }
-
-      /* --- 🌈 彩虹提示词样式 --- */
-      .token-style { color: #FF7675; font-weight: bold; } /* 风格 - 红 */
-      .token-subject { color: #74B9FF; font-weight: bold; } /* 主体 - 蓝 */
-      .token-emotion { color: #A29BFE; font-weight: bold; } /* 情绪 - 紫 */
-      .token-zoom { color: #55EFC4; font-weight: bold; } /* 镜头 - 绿 */
-      .token-base { color: #B2BEC3; } /* 基础词 - 灰 */
-      .token-light { color: #FDCB6E; font-weight: bold; } /* 光照 - 金 */
-      .token-weather { color: #00CEC9; font-weight: bold; } /* 天气 - 青 */
-      .token-env { color: #FD79A8; font-weight: bold; cursor: help; border-bottom: 1px dotted currentColor; } /* 统一环境 - 粉 */
-
-      /* 优化后的 output-box 文字大小和行高 */
-      .output-box {
-          font-size: 1.1rem;
-          line-height: 1.6;
-          font-family: 'Segoe UI', Tahoma, sans-serif; /* 不用等宽字体了，用易读字体 */
-      }
-
-      /* --- 🎓 知识点悬浮 (Tooltips) --- */
-        
-      /* 让彩色词汇支持悬停交互 */
-      .token-style, .token-subject, .token-emotion, .token-zoom, .token-base, .token-light, .token-weather, .token-env {
-          position: relative;
-          cursor: help; /* 鼠标变成问号 */
-          border-bottom: 1px dotted currentColor; /* 虚线强调 */
-      }
-
-      /* 悬浮气泡 (Tooltip) */
-      [data-tooltip]:hover::after {
-          content: attr(data-tooltip);
-          position: absolute;
-          bottom: 120%;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0, 0, 0, 0.8);
-          color: #fff;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 0.8rem;
-          font-weight: normal;
-          white-space: nowrap;
-          z-index: 100;
-          pointer-events: none;
-          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      }
-
-      /* 小三角 */
-      [data-tooltip]:hover::before {
-          content: '';
-          position: absolute;
-          bottom: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 6px solid transparent;
-          border-top-color: rgba(0, 0, 0, 0.8);
-      }
-
-      /* 开关样式 */
-      .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-      .switch input { opacity: 0; width: 0; height: 0; }
-      .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-      .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-      input:checked + .slider { background-color: #2196F3; }
-      input:checked + .slider:before { transform: translateX(22px); }
-
+        /* 把截图里的样式都整合在这里了 */
+        :root { --primary-color: #FF6B6B; --secondary-color: #4ECDC4; --bg-color: #F7F9FC; --card-bg: #FFFFFF; --text-color: #2D3436; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { max-width: 1100px; width: 100%; background: var(--card-bg); border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; text-align: center; }
+        .workspace { display: flex; gap: 40px; align-items: flex-start; text-align: left; margin-top: 30px; }
+        .panel-left { flex: 1; min-width: 300px; }
+        .panel-right { flex: 1.3; position: sticky; top: 20px; background: var(--card-bg); z-index: 10; }
+        @media (max-width: 768px) { .workspace { flex-direction: column; } .panel-right { position: static; width: 100%; } }
+        h1 { font-size: 2.5rem; color: var(--primary-color); margin: 0 0 5px 0; }
+        .tabs { display: flex; justify-content: center; background: #EEE; border-radius: 50px; padding: 5px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 40px; font-weight: bold; cursor: pointer; color: #666; }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+        .mode-content { display: none; animation: fadeIn 0.5s; }
+        .mode-content.active { display: block; }
+        .control-group { background: #FAFAFA; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #EEE; }
+        .control-label { font-weight: bold; margin-bottom: 8px; display: block; }
+        select, input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #DDD; box-sizing: border-box; }
+        .magic-btn { width: 100%; border-radius: 15px; border: none; background: linear-gradient(145deg, #FF6B6B, #FF8E8E); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; }
+        .viewfinder { width: 100%; aspect-ratio: 3/2; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 5px solid #FFF; box-shadow: 0 10px 20px rgba(0,0,0,0.15); margin-bottom: 15px; }
+        .viewfinder img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; }
+        .spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; display: none; }
+        .output-box { background: #2D3436; color: #dfe6e9; padding: 20px; border-radius: 15px; font-family: monospace; min-height: 80px; line-height: 1.6; word-break: break-word; }
+        .token-style { color: #FF7675; } .token-subject { color: #74B9FF; } .token-emotion { color: #A29BFE; } .token-env { color: #FD79A8; } .token-zoom { color: #55EFC4; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .gallery-card { height: 140px; perspective: 1000px; cursor: pointer; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .gallery-card:hover .card-inner, .gallery-card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; overflow: hidden; }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; }
+        .card-back { background: #2D3436; color: #81ECEC; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 10px; font-size: 0.6rem; overflow: auto; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .action-btn { flex: 1; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; margin-right:5px;}
+        .copy-btn { background: #74B9FF; } .download-btn { background: #4ECDC4; }
+        .optimize-btn, .save-btn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 15px; color: white; border: none; font-weight: bold; cursor: pointer; }
+        .optimize-btn { background: #A29BFE; } .save-btn { background: #FF7675; }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
-  }
-}
-</script>
 </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<body>
+<div class="container">
+    <h1>✨ DreamSnap</h1>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('auto')">🎲 自动造梦</button>
+        <button class="tab-btn" onclick="switchTab('manual')">🛠️ 人工实验室</button>
+        <button class="tab-btn" onclick="switchTab('challenge')">🏆 挑战任务</button>
+    </div>
+    <div class="workspace">
+        <div class="panel-left">
+            <div id="auto-mode" class="mode-content active">
+                <div class="control-group" style="text-align:center; border:none; background:transparent; padding-top:40px;">
+                    <button class="magic-btn" onclick="generateAutoPrompt()">✨ 立即造梦</button>
+                </div>
+            </div>
+            <div id="manual-mode" class="mode-content">
+                <div id="mission-board" style="display:none; background:#FFF3CD; border:2px solid #FFC107; border-radius:15px; padding:15px; margin-bottom:20px;">
+                    <h3 style="margin:0; color:#856404;">🚩 <span id="level-title">Level 1</span></h3>
+                    <p id="mission-desc" style="color:#856404; font-size:0.9rem;">加载中...</p>
+                    <ul id="mission-checklist" style="padding-left:20px; font-size:0.9rem;"></ul>
+                    <button id="next-level-btn" onclick="nextLevel()" style="display:none; width:100%; background:#2ecc71; color:white; border:none; padding:10px; border-radius:20px; margin-top:10px; cursor:pointer;">🎉 下一关</button>
+                </div>
+                <div class="control-group"><label class="control-label">👤 主角</label><select id="subject-select" onchange="handleUpdate()"><option value="girl">赛博少女</option><option value="cat">宇航员猫咪</option><option value="robot">复古机器人</option><option value="wizard">魔法师</option><option value="house">霍比特小屋</option></select></div>
+                <div class="control-group"><label class="control-label">😊 情绪</label><input type="range" id="emotion-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()"></div>
+                <div class="control-group"><label class="control-label">🎨 风格</label><select id="style-select" onchange="handleUpdate()"><option value="real">手机抓拍</option><option value="cinema">电影大片</option><option value="3d">3D渲染</option><option value="pixel">像素艺术</option></select></div>
+                <div class="control-group"><label class="control-label">💡 光照</label><select id="light-select" onchange="handleUpdate()"><option value="natural">自然光</option><option value="neon">赛博霓虹</option></select></div>
+                <div class="control-group"><label class="control-label">🌦️ 天气</label><select id="weather-select" onchange="handleUpdate()"><option value="clear">晴朗</option><option value="rain">下雨</option></select></div>
+                <div class="control-group"><label class="control-label">📷 运镜</label><input type="range" id="zoom-slider" min="0" max="4" step="1" value="1" oninput="handleUpdate()"></div>
+                <div style="background:#e8f0fe; padding:10px; border-radius:10px; display:flex; justify-content:space-between;"><span>🧪 实验模式 (Seed Lock)</span><input type="checkbox" id="seed-lock" onchange="toggleSeedLock()"></div>
+                <button class="magic-btn" onclick="manualSnap()">📸 点击显影</button>
+            </div>
+        </div>
+        <div class="panel-right">
+            <div class="viewfinder">
+                <div id="loading-spinner" class="spinner">🔮 正在显影...</div>
+                <img id="preview-img" src="https://placehold.co/600x400/2D3436/FFF?text=Ready+to+Dream" alt="Preview">
+            </div>
+            <div class="output-box" id="prompt-result" data-raw="">等待指令中... 🤖</div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="action-btn copy-btn" onclick="copyToClipboard()">📋 复制</button>
+                <button class="action-btn download-btn" onclick="downloadImage()">⬇️ 下载</button>
+            </div>
+            <button class="optimize-btn" onclick="optimizePrompt()">✨ 魔法优化</button>
+            <button class="save-btn" onclick="saveToGallery()">❤️ 收藏进画廊</button>
+        </div>
+    </div>
+    <div class="gallery-section"><h2>🖼️ 梦境画廊</h2><div id="gallery-grid" class="gallery-grid"></div><button onclick="clearGallery()" style="background:none; border:none; color:#999; margin-top:20px; cursor:pointer;">🗑️ 清空画廊</button></div>
+</div>
+
+<script>
+    // --- 这里就是把你截图里所有tsx文件合并后的逻辑 ---
+    const manualData = {
+        subjects: { "girl": "cyberpunk girl, neon hair", "cat": "cute tabby cat astronaut", "robot": "vintage tin robot", "wizard": "gandalf wizard", "house": "hobbit house" },
+        emotions: ["crying", "neutral", "laughing", "angry", "surprised"],
+        zooms: ["extreme close-up", "portrait", "medium shot", "full body", "drone view"],
+        styles: { "real": "hyper-realistic, 8k", "cinema": "cinematic movie scene", "3d": "3D render", "pixel": "pixel art" },
+        lightings: { "natural": "soft sunlight", "neon": "neon lights" },
+        weathers: { "clear": "clear sky", "rain": "heavy rain" }
+    };
+    const missions = [
+        { id: 1, title: "悲伤的雨夜", desc: "生成: **雨中** 的 **悲伤** **赛博少女**", requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" } }
+    ];
+    let currentLockedSeed = null; let isChallengeActive = false; let currentLevel = 0;
+
+    function handleUpdate() { updateManualPrompt(); if(isChallengeActive) checkMissionProgress(); }
+    function updateManualPrompt() {
+        const s = document.getElementById('subject-select').value, e = document.getElementById('emotion-slider').value, z = document.getElementById('zoom-slider').value, st = document.getElementById('style-select').value, l = document.getElementById('light-select').value, w = document.getElementById('weather-select').value;
+        const raw = `${manualData.styles[st]||st}, ${manualData.subjects[s]||s}, ${manualData.emotions[e]||e}, ${manualData.lightings[l]||l}, ${manualData.weathers[w]||w}, ${manualData.zooms[z]||z}, best quality.`;
+        document.getElementById('prompt-result').setAttribute('data-raw', raw);
+        document.getElementById('prompt-result').innerHTML = `<span class="token-style">[风格] ${st}</span> <span class="token-subject">[主体] ${s}</span> ...`;
+    }
+    function generateAutoPrompt() { 
+        const raw = "A mystical forest spirit, glowing lights, masterpiece, 8k.";
+        document.getElementById('prompt-result').setAttribute('data-raw', raw); document.getElementById('prompt-result').innerText = raw; runNanoBanana(raw); 
+    }
+    function manualSnap() { runNanoBanana(document.getElementById('prompt-result').getAttribute('data-raw')); }
+    function runNanoBanana(prompt) {
+        const img = document.getElementById('preview-img'); const spin = document.getElementById('loading-spinner');
+        spin.style.display='block'; img.style.opacity='0.5';
+        let seed = currentLockedSeed !== null ? currentLockedSeed : Math.floor(Math.random()*9999);
+        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=400&seed=${seed}&nologo=true`;
+        img.onload = () => { spin.style.display='none'; img.style.opacity='1'; };
+    }
+    function switchTab(mode) {
+        document.querySelectorAll('.mode-content').forEach(d=>d.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('mission-board').style.display='none'; isChallengeActive=false;
+        if(mode==='auto'){document.getElementById('auto-mode').classList.add('active');document.querySelectorAll('.tab-btn')[0].classList.add('active');}
+        else{document.getElementById('manual-mode').classList.add('active'); if(mode==='challenge'){document.getElementById('mission-board').style.display='block';isChallengeActive=true;loadMission(0);}else{document.querySelectorAll('.tab-btn')[1].classList.add('active');}}
+    }
+    function loadMission(idx){ 
+        if(idx>=missions.length){alert("通关!");return;}
+        const m=missions[idx]; document.getElementById('level-title').innerText=`Level ${m.id}`; document.getElementById('mission-desc').innerHTML=m.desc;
+    }
+    function checkMissionProgress(){ 
+        const m=missions[0]; 
+        const list=document.getElementById('mission-checklist'); list.innerHTML="";
+        let all=true; 
+        for(const [k,v] of Object.entries(m.requirements)){
+            const match = document.getElementById(k).value === v; if(!match) all=false;
+            list.innerHTML += `<li>${match?'✅':'❌'} ${k}</li>`;
+        }
+        if(all) document.getElementById('next-level-btn').style.display='block';
+    }
+    function toggleSeedLock(){ const l=document.getElementById('seed-lock').checked; if(l&&!currentLockedSeed)currentLockedSeed=Math.floor(Math.random()*9999); if(!l)currentLockedSeed=null; }
+    function optimizePrompt(){ manualSnap(); } 
+    function copyToClipboard(){ navigator.clipboard.writeText(document.getElementById('prompt-result').getAttribute('data-raw')); }
+    function downloadImage(){ const a=document.createElement('a'); a.href=document.getElementById('preview-img').src; a.download='dream.webp'; a.click(); }
+    function saveToGallery(){ const u=document.getElementById('preview-img').src; const g=document.getElementById('gallery-grid'); g.innerHTML+=`<div class="gallery-card"><img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>`; }
+    function clearGallery(){ document.getElementById('gallery-grid').innerHTML=""; }
+</script>
+</body>
 </html>
