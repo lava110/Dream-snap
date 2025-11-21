@@ -403,60 +403,92 @@
 </div>
 
 <script>
-    // --- 逻辑部分 (保持不变，功能核心) ---
+    // --- 1. 数据大脑 (Data Brain) - 这里定义了华丽的描述词 ---
     const manualData = {
-        subjects: { "girl": "cyberpunk girl, neon hair", "cat": "cute tabby cat astronaut", "robot": "vintage tin robot", "wizard": "gandalf wizard", "house": "hobbit house" },
-        emotions: ["crying", "neutral", "laughing", "angry", "surprised"],
-        zooms: ["extreme close-up", "portrait", "medium shot", "full body", "drone view"],
-        styles: { "real": "hyper-realistic, 8k", "cinema": "cinematic movie scene", "3d": "3D render", "pixel": "pixel art" },
-        lightings: { "natural": "soft sunlight", "neon": "neon lights", "studio": "studio lighting", "moon": "moonlight" },
-        weathers: { "clear": "clear sky", "rain": "heavy rain", "snow": "snowing", "fog": "foggy" }
+        subjects: {
+            "girl": "portrait of a cyberpunk girl with neon hair, futuristic visor, mechanical interface",
+            "cat": "cute orange tabby cat astronaut, galaxy reflection in helmet, high detail",
+            "warrior": "epic ancient samurai warrior, armor details, cherry blossoms falling",
+            "robot": "vintage tin robot with glowing eyes, steampunk gears, rusty metal texture",
+            "wizard": "gandalf-like wizard holding a glowing staff, magical particles, beard",
+            "house": "cozy hobbit house built into a hill, round door, smoke from chimney, fantasy"
+        },
+        emotions: [
+            "crying, teary eyes, melancholic atmosphere, sad expression", // 0
+            "neutral expression, calm gaze, mysterious vibe", // 1
+            "laughing out loud, radiant smile, joyful vibes, showing teeth", // 2
+            "angry, shouting, furious expression, fire particles in background", // 3
+            "surprised, wide eyes, open mouth, shock, dramatic" // 4
+        ],
+        zooms: [
+            "extreme close-up, macro shot on eyes, detailed texture", // 0
+            "portrait shot, head and shoulders, shallow depth of field", // 1
+            "medium shot, waist up, dynamic pose, interaction", // 2
+            "full body shot, wide angle, showing shoes and ground", // 3
+            "drone view, aerial photography, tiny subject, grand scale" // 4
+        ],
+        styles: {
+            "real": "hyper-realistic photography, 8k, shot on Sony A7R IV, highly detailed",
+            "cinema": "cinematic movie scene, teal and orange grading, anamorphic lens, dramatic lighting",
+            "3d": "3D render, clay material, blind box toy style, octane render, c4d",
+            "anime": "studio ghibli style, hand drawn animation, cel shaded, vibrant colors",
+            "pixel": "16-bit pixel art, retro game style, minecraft vibe, blocky"
+        },
+        lightings: {
+            "natural": "soft natural sunlight, golden hour, warm glow",
+            "studio": "studio lighting, rim light, professional softbox, clean look",
+            "neon": "neon lights, cyberpunk pink and blue lighting, dark atmosphere",
+            "moon": "moonlight, cold blue tones, mysterious night, dark shadows"
+        },
+        weathers: {
+            "clear": "clear blue sky, sunny day, lens flare",
+            "rain": "heavy rain, wet surfaces, reflections, umbrella, splashing",
+            "snow": "snowing, frost, winter vibe, white particles, cold",
+            "fog": "foggy, misty, silent hill atmosphere, low contrast, mysterious"
+        }
     };
-    
-    const missions = // --- 🏆 升级版题库：5个循序渐进的关卡 ---
+
+    // --- 2. 挑战题库 ---
     const missions = [
         { 
             id: 1, 
             title: "新手村：雨中泪", 
-            desc: "让我们开始第一课。请生成一张充满故事感的照片：<br>在 <b>雨中(Rain)</b> 的 <b>悲伤(Crying)</b> 的 <b>赛博少女(Girl)</b>。", 
-            requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" },
-            hint: "提示：关注主角、天气和情绪滑块。"
+            desc: "请生成一张充满故事感的照片。<br>要求：在 <b>雨中(Rain)</b> 的 <b>悲伤(Crying)</b> 的 <b>赛博少女(Girl)</b>。", 
+            requirements: { "subject-select": "girl", "weather-select": "rain", "emotion-slider": "0" } 
         },
         { 
             id: 2, 
             title: "进阶课：快乐太空猫", 
-            desc: "风格转换测试！我们需要一张 <b>手机抓拍(Real)</b> 风格的照片。<br>主角是一只 <b>大笑(Laughing)</b> 的 <b>宇航员猫咪(Cat)</b>。", 
-            requirements: { "style-select": "real", "subject-select": "cat", "emotion-slider": "2" },
-            hint: "提示：别忘了把风格切换回'手机抓拍'。"
+            desc: "风格转换测试！<br>要求：<b>手机抓拍(Real)</b> 风格，一只 <b>大笑(Laughing)</b> 的 <b>宇航员猫咪</b>。", 
+            requirements: { "style-select": "real", "subject-select": "cat", "emotion-slider": "2" } 
         },
         { 
             id: 3, 
             title: "光影课：霓虹武士", 
-            desc: "学习光影的使用。请创作一位 <b>古代剑客(Warrior)</b>，<br>他站在 <b>赛博霓虹(Neon)</b> 的灯光下，且要是 <b>电影大片(Cinema)</b> 质感。", 
-            requirements: { "subject-select": "warrior", "light-select": "neon", "style-select": "cinema" },
-            hint: "提示：光照选择'赛博霓虹'能带来强烈的对比。"
+            desc: "学习光影控制。<br>要求：<b>古代剑客</b>，站在 <b>赛博霓虹</b> 灯光下，<b>电影大片</b> 质感。", 
+            requirements: { "subject-select": "warrior", "light-select": "neon", "style-select": "cinema" } 
         },
         { 
             id: 4, 
             title: "构图课：特写魔法师", 
-            desc: "运镜决定了画面的冲击力。<br>请给 <b>魔法师(Wizard)</b> 拍一张 <b>极度特写(Extreme Close-up)</b>，要能看清他的胡须！", 
-            requirements: { "subject-select": "wizard", "zoom-slider": "0" },
-            hint: "提示：将运镜滑块拉到最左边。"
+            desc: "运镜决定冲击力。<br>要求：<b>魔法师</b> 的 <b>极度特写(特写)</b>，看清胡须！", 
+            requirements: { "subject-select": "wizard", "zoom-slider": "0" } 
         },
         { 
             id: 5, 
-            title: "毕业考：霍比特人的雪景", 
-            desc: "综合考验！我们需要一张 <b>3D渲染(3D)</b> 风格的壁纸。<br>场景是 <b>下雪(Snow)</b> 的 <b>霍比特小屋(House)</b>，采用 <b>航拍视角(Drone)</b>。", 
-            requirements: { "subject-select": "house", "style-select": "3d", "weather-select": "snow", "zoom-slider": "4" },
-            hint: "提示：你需要同时调整四个参数！"
+            title: "毕业考：霍比特雪景", 
+            desc: "综合考验！<br>要求：<b>3D渲染</b> 风格，<b>下雪</b> 的 <b>霍比特小屋</b>，采用 <b>航拍视角</b>。", 
+            requirements: { "subject-select": "house", "style-select": "3d", "weather-select": "snow", "zoom-slider": "4" } 
         }
     ];
     
-    let currentLockedSeed = null; let isChallengeActive = false; let currentLevel = 0;
+    let currentLockedSeed = null; 
+    let isChallengeActive = false; 
+    let currentLevel = 0;
 
-    // 初始化
+    // --- 3. 初始化与核心逻辑 ---
     window.onload = function() {
-        handleUpdate(); // 页面加载时先刷新一次文字颜色
+        handleUpdate(); 
         renderGallery();
     };
 
@@ -465,26 +497,39 @@
         if(isChallengeActive) checkMissionProgress(); 
     }
     
+    // ✨ 核心修改：这里决定了提示词框显示什么
     function updateManualPrompt() {
-        const s = document.getElementById('subject-select').value;
-        const e = document.getElementById('emotion-slider').value;
-        const z = document.getElementById('zoom-slider').value;
-        const st = document.getElementById('style-select').value;
-        const l = document.getElementById('light-select').value;
-        const w = document.getElementById('weather-select').value;
+        // 1. 获取用户选择的 ID
+        const sKey = document.getElementById('subject-select').value;
+        const eKey = document.getElementById('emotion-slider').value;
+        const zKey = document.getElementById('zoom-slider').value;
+        const stKey = document.getElementById('style-select').value;
+        const lKey = document.getElementById('light-select').value;
+        const wKey = document.getElementById('weather-select').value;
 
-        // 构建Raw
-        const raw = `${manualData.styles[st]||st}, ${manualData.subjects[s]||s}, ${manualData.emotions[e]||e}, ${manualData.lightings[l]||l}, ${manualData.weathers[w]||w}, ${manualData.zooms[z]||z}, best quality.`;
+        // 2. 从 Data Brain 中获取【长描述】，如果没找到就用短的
+        const textStyle = manualData.styles[stKey] || stKey;
+        const textSubject = manualData.subjects[sKey] || sKey;
+        const textEmotion = manualData.emotions[eKey] || "neutral";
+        const textLight = manualData.lightings[lKey] || lKey;
+        const textWeather = manualData.weathers[wKey] || wKey;
+        const textZoom = manualData.zooms[zKey] || "portrait";
+
+        // 3. 组合给 AI 看的 Raw Prompt (纯文本)
+        const raw = `${textStyle}, ${textSubject}, ${textEmotion}, ${textLight}, ${textWeather}, ${textZoom}, best quality.`;
         document.getElementById('prompt-result').setAttribute('data-raw', raw);
         
-        // 构建高亮HTML
+        // 4. 组合给用户看的 HTML (华丽版)
+        // 使用 <div> 让每一类占据一行，或者用 <span> 紧凑排列
+        // 这里模仿 Build 模式的列表风格
         const html = `
-            <div style="margin-bottom:5px;"><span class="token-style">[风格] ${st}</span></div>
-            <div style="margin-bottom:5px;"><span class="token-subject">[主体] ${s}</span></div>
-            <div style="margin-bottom:5px;"><span class="token-emotion">[情绪] ${manualData.emotions[e]}</span></div>
-            <div style="margin-bottom:5px;"><span class="token-env">[光照] ${l}</span> <span class="token-env">[天气] ${w}</span></div>
-            <div><span class="token-zoom">[运镜] ${manualData.zooms[z]}</span></div>
-            <div class="token-base" style="margin-top:8px; opacity:0.5;">best quality, masterpiece.</div>
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-style">[风格] ${textStyle}</span></div>
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-subject">[主体] ${textSubject}</span></div>
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-emotion">[情绪] ${textEmotion}</span></div>
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-env">[光照] ${textLight}</span></div> 
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-env">[天气] ${textWeather}</span></div>
+            <div style="margin-bottom:4px; line-height:1.4;"><span class="token-zoom">[运镜] ${textZoom}</span></div>
+            <div class="token-base" style="margin-top:8px; opacity:0.5; border-top:1px solid #444; padding-top:5px;">best quality, masterpiece, 8k resolution.</div>
         `;
         document.getElementById('prompt-result').innerHTML = html;
     }
@@ -492,7 +537,7 @@
     function generateAutoPrompt() { 
         const raw = "A mystical forest spirit, glowing lights, masterpiece, 8k.";
         document.getElementById('prompt-result').setAttribute('data-raw', raw); 
-        document.getElementById('prompt-result').innerHTML = `<span style="color:#a29bfe">${raw}</span>`; 
+        document.getElementById('prompt-result').innerHTML = `<span style="color:#a29bfe; font-size:1.1rem;">${raw}</span>`; 
         runNanoBanana(raw); 
     }
     
@@ -502,7 +547,6 @@
         const img = document.getElementById('preview-img'); const spin = document.getElementById('loading-spinner');
         spin.style.display='block'; img.style.opacity='0.3';
         let seed = currentLockedSeed !== null ? currentLockedSeed : Math.floor(Math.random()*9999);
-        // 增加随机参数避免缓存
         img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=533&seed=${seed}&nologo=true&t=${Date.now()}`;
         img.onload = () => { spin.style.display='none'; img.style.opacity='1'; };
     }
@@ -523,50 +567,66 @@
     }
 
     function loadMission(idx){ 
-        if(idx>=missions.length){alert("通关!");return;}
-        const m=missions[idx]; document.getElementById('level-title').innerText=`Level ${m.id}`; document.getElementById('mission-desc').innerHTML=m.desc;
+        if(idx>=missions.length){alert("🎉 恭喜！你已完成所有挑战！");return;}
+        currentLevel = idx;
+        const m=missions[idx]; document.getElementById('level-title').innerText=`Level ${m.id}: ${m.title}`; document.getElementById('mission-desc').innerHTML=m.desc;
         checkMissionProgress();
     }
     
     function checkMissionProgress(){ 
-        const m=missions[0]; 
+        const m=missions[currentLevel]; 
         const list=document.getElementById('mission-checklist'); list.innerHTML="";
         let all=true; 
         for(const [k,v] of Object.entries(m.requirements)){
             const el = document.getElementById(k);
             const match = el.value === v; if(!match) all=false;
-            // 获取Label
             let label = k;
-            if(el.parentElement.querySelector('label')) label = el.parentElement.querySelector('label').innerText.split(' ')[0];
-            list.innerHTML += `<li style="margin-bottom:5px; color:${match?'#00b894':'#d63031'};"> ${match?'✅':'❌'} <b>${label}</b> 匹配</li>`;
+            // 尝试获取Label文本
+            if(el.parentElement && el.parentElement.querySelector('label')) label = el.parentElement.querySelector('label').innerText.split(' ')[0];
+            list.innerHTML += `<li style="margin-bottom:5px; color:${match?'#00b894':'#d63031'}; font-weight:bold;"> ${match?'✅':'❌'} ${label} 匹配</li>`;
         }
+        const btn = document.getElementById('next-level-btn');
         if(all) {
-            document.getElementById('next-level-btn').style.display='block';
+            btn.style.display='block';
             confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }});
+        } else {
+            btn.style.display='none';
         }
     }
+    
+    function nextLevel() { loadMission(currentLevel + 1); }
 
     function toggleSeedLock(){ const l=document.getElementById('seed-lock').checked; if(l&&!currentLockedSeed)currentLockedSeed=Math.floor(Math.random()*9999); if(!l)currentLockedSeed=null; }
+    
     function optimizePrompt(){ 
         let raw = document.getElementById('prompt-result').getAttribute('data-raw');
-        raw += ", highly detailed, dramatic lighting, 8k resolution";
+        raw += ", highly detailed, dramatic lighting, 8k resolution, trending on artstation";
         document.getElementById('prompt-result').setAttribute('data-raw', raw);
+        // 视觉上给个反馈
+        const oldHtml = document.getElementById('prompt-result').innerHTML;
+        document.getElementById('prompt-result').innerHTML += `<div style="color:#a29bfe; margin-top:10px;">✨ 魔法优化已生效...</div>`;
         manualSnap();
     } 
-    function copyToClipboard(){ navigator.clipboard.writeText(document.getElementById('prompt-result').getAttribute('data-raw')).then(()=>alert("已复制！")); }
-    function downloadImage(){ const a=document.createElement('a'); a.href=document.getElementById('preview-img').src; a.download='dream.webp'; a.click(); }
+    
+    function copyToClipboard(){ navigator.clipboard.writeText(document.getElementById('prompt-result').getAttribute('data-raw')).then(()=>alert("已复制完整提示词！")); }
+    function downloadImage(){ const a=document.createElement('a'); a.href=document.getElementById('preview-img').src; a.download='dreamsnap_creation.webp'; a.click(); }
     
     function saveToGallery(){ 
         const u=document.getElementById('preview-img').src; 
-        const p=document.getElementById('prompt-result').innerText;
+        const p=document.getElementById('prompt-result').innerText; // 保存纯文本用于显示
         const g=document.getElementById('gallery-grid'); 
-        // 本地存储逻辑可在此扩展
-        g.innerHTML=`<div class="gallery-card"><div class="card-inner"><div class="card-front"><img src="${u}"></div><div class="card-back">${p.substring(0,50)}...</div></div></div>` + g.innerHTML; 
+        if(u.includes('placehold')) return;
+        const card = `<div class="gallery-card"><div class="card-inner"><div class="card-front"><img src="${u}"></div><div class="card-back" style="padding:10px; overflow:hidden;">${p.substring(0,80)}...</div></div></div>`;
+        g.innerHTML = card + g.innerHTML; 
+        // 简单存储到 LocalStorage (可选)
+        // let old = localStorage.getItem('ds_gallery') || "";
+        // localStorage.setItem('ds_gallery', card + old);
     }
-    function clearGallery(){ document.getElementById('gallery-grid').innerHTML=""; }
     
-    // 初始渲染画廊
-    function renderGallery() {} 
+    function clearGallery(){ document.getElementById('gallery-grid').innerHTML=""; localStorage.removeItem('ds_gallery'); }
+    function renderGallery() { 
+        // document.getElementById('gallery-grid').innerHTML = localStorage.getItem('ds_gallery') || ""; 
+    }
 </script>
 </body>
 </html>
